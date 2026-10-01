@@ -80,9 +80,10 @@ class AmortizationTable extends HTMLElement {
     const plazo = parseInt(this.shadowRoot.querySelector("#plazo").value);
     const tipoAmortizacion = this.shadowRoot.querySelector("#tipoAmortizacion").value;
 
-    // Lógica para calcular la amortización
+    // El <option> envía "Frances" (sin tilde). Comparar con "Francés" hacía
+    // que todo préstamo, incluido el francés, cayera en el cálculo americano.
     let tablaAmortizacion = [];
-    if (tipoAmortizacion === "Francés") {
+    if (tipoAmortizacion === "Frances" || tipoAmortizacion === "Francés") {
       tablaAmortizacion = this.calculateFrenchAmortization(monto, interes, plazo);
     } else {
       tablaAmortizacion = this.calculateAmericanAmortization(monto, interes, plazo);
@@ -112,21 +113,23 @@ class AmortizationTable extends HTMLElement {
     return tabla;
   }
 
-  // Calcular la tabla de amortización del tipo Americano
+  // Sistema americano: solo intereses hasta la última cuota, donde se paga
+  // el capital completo. El saldo no se reduce en las cuotas intermedias.
   calculateAmericanAmortization(monto, interes, plazo) {
     const interesMensual = (monto * interes / 100) / 12;
     const tabla = [];
-    let saldoRestante = monto;
     for (let i = 1; i <= plazo; i++) {
+      const esUltimaCuota = i === plazo;
+      const amortizacionCapital = esUltimaCuota ? monto : 0;
+      const cuotaMensual = interesMensual + amortizacionCapital;
       tabla.push({
         numeroCuota: i,
-        saldoInicial: saldoRestante,
-        cuotaMensual: interesMensual.toFixed(2),
+        saldoInicial: monto.toFixed(2),
+        cuotaMensual: cuotaMensual.toFixed(2),
         intereses: interesMensual.toFixed(2),
-        amortizacionCapital: i === plazo ? saldoRestante.toFixed(2) : '0.00',
-        saldoRestante: i === plazo ? '0.00' : saldoRestante.toFixed(2)
+        amortizacionCapital: amortizacionCapital.toFixed(2),
+        saldoRestante: esUltimaCuota ? "0.00" : monto.toFixed(2)
       });
-      saldoRestante -= saldoRestante;
     }
     return tabla;
   }
