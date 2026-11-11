@@ -1,3 +1,5 @@
+import { buildAmortizationTable } from "../js/amortization.js";
+
 class AmortizationTable extends HTMLElement {
   constructor() {
     super();
@@ -80,55 +82,9 @@ class AmortizationTable extends HTMLElement {
     const plazo = parseInt(this.shadowRoot.querySelector("#plazo").value);
     const tipoAmortizacion = this.shadowRoot.querySelector("#tipoAmortizacion").value;
 
-    // Lógica para calcular la amortización
-    let tablaAmortizacion = [];
-    if (tipoAmortizacion === "Francés") {
-      tablaAmortizacion = this.calculateFrenchAmortization(monto, interes, plazo);
-    } else {
-      tablaAmortizacion = this.calculateAmericanAmortization(monto, interes, plazo);
-    }
+    const tablaAmortizacion = buildAmortizationTable(tipoAmortizacion, monto, interes, plazo);
 
     this.renderAmortizationTable(tablaAmortizacion);
-  }
-
-  // Calcular la tabla de amortización del tipo Francés
-  calculateFrenchAmortization(monto, interes, plazo) {
-    const cuotaMensual = (monto * (interes / 100) / 12) / (1 - Math.pow(1 + interes / 100 / 12, -plazo));
-    let saldoRestante = monto;
-    let tabla = [];
-    for (let i = 1; i <= plazo; i++) {
-      const intereses = saldoRestante * interes / 100 / 12;
-      const amortizacionCapital = cuotaMensual - intereses;
-      saldoRestante -= amortizacionCapital;
-      tabla.push({
-        numeroCuota: i,
-        saldoInicial: saldoRestante + amortizacionCapital,
-        cuotaMensual: cuotaMensual.toFixed(2),
-        intereses: intereses.toFixed(2),
-        amortizacionCapital: amortizacionCapital.toFixed(2),
-        saldoRestante: saldoRestante.toFixed(2)
-      });
-    }
-    return tabla;
-  }
-
-  // Calcular la tabla de amortización del tipo Americano
-  calculateAmericanAmortization(monto, interes, plazo) {
-    const interesMensual = (monto * interes / 100) / 12;
-    const tabla = [];
-    let saldoRestante = monto;
-    for (let i = 1; i <= plazo; i++) {
-      tabla.push({
-        numeroCuota: i,
-        saldoInicial: saldoRestante,
-        cuotaMensual: interesMensual.toFixed(2),
-        intereses: interesMensual.toFixed(2),
-        amortizacionCapital: i === plazo ? saldoRestante.toFixed(2) : '0.00',
-        saldoRestante: i === plazo ? '0.00' : saldoRestante.toFixed(2)
-      });
-      saldoRestante -= saldoRestante;
-    }
-    return tabla;
   }
 
   // Renderizar la tabla de amortización calculada
